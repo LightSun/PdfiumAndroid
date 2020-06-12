@@ -17,7 +17,7 @@ ext {
     bintrayRepo = 'maven'
     bintrayName = 'pdfium-android'
 
-    publishedGroupId = 'com.github.barteksc'
+    publishedGroupId = 'com.github.LightSun'
     libraryName = 'PdfiumAndroid'
     artifact = 'pdfium-android'
 
@@ -71,5 +71,5 @@ dependencies {
     implementation 'com.android.support:support-v4:26.1.0'
 }
 
-apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/installv1.gradle'
-apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/bintrayv1.gradle'
+apply from: 'installv1.gradle'
+apply from: 'bintrayv1.gradle'
