@@ -482,7 +482,7 @@ public final class PdfiumCore {
      *                      3 (rotated 90 degrees counter-clockwise)
      * @param deviceX   X value in device coordinates to be converted.
      * @param deviceY   Y value in device coordinates to be converted.
-     * @return
+     * @return page coordinates
      */
     public PointF mapDeviceCoordsToPage(PdfDocument doc, int pageIndex, int startX, int startY, int sizeX,
                                         int sizeY, int rotate, int deviceX, int deviceY) {
