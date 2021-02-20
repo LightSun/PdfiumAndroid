@@ -10,6 +10,7 @@ import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.view.Surface;
 
+import com.heaven7.android.pdfium.PDFWriter;
 import com.shockwave.pdfium.util.Size;
 
 import java.io.FileDescriptor;
@@ -38,6 +39,11 @@ public final class PdfiumCore {
          * @li 0    0   1 */
         nInsertImage(docPtr, pageIndex, bitmap, arr[0], arr[2], arr[4], arr[1], arr[3], arr[5]);
     }
+    public void savePdf(long docPtr, PDFWriter writer){
+
+    }
+    private native void nSavePdf(long docPtr, PDFWriter writer, boolean incremental);
+
     //add a image to pdf
     private native void nInsertImage(long docPtr, int pageIndex, Bitmap bitmap, float a, float b, float c, float d, float e, float f);
 

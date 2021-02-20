@@ -16,9 +16,11 @@ using namespace android;
 
 #include <fpdfview.h>
 #include "fpdf_edit.h"
+#include "java_env.h"
 #include <fpdf_doc.h>
 #include <string>
 #include <vector>
+#include <fpdf_save.h>
 
 static Mutex sLibraryLock;
 
@@ -744,7 +746,7 @@ JNI_FUNC(jobject, PdfiumCore, nativePageCoordsToDevice)(JNI_ARGS, jlong pagePtr,
     return env->NewObject(clazz, constructorID, deviceX, deviceY);
 }
 
-//-------------------- used for
+//-------------------- used for -----------------------
 JNI_FUNC(jobject, PdfiumCore, nativeDeviceCoordsToPage)(JNI_ARGS, jlong pagePtr, jint startX,
                                                          jint startY, jint sizeX,
                                                          jint sizeY, jint rotate, jint deviceX,
@@ -756,7 +758,49 @@ JNI_FUNC(jobject, PdfiumCore, nativeDeviceCoordsToPage)(JNI_ARGS, jlong pagePtr,
 
      jclass clazz = env->FindClass("android/graphics/PointF");
      jmethodID constructorID = env->GetMethodID(clazz, "<init>", "(FF)V");
-     return env->NewObject(clazz, constructorID, pageX, pageY);
+     return env->NewObject(clazz, constructorID, (float)pageX, (float)pageY);
  }
 
 }//extern C
+
+jobject _writer;
+#define SIG_BYTE_BUFFER "Ljava/nio/ByteBuffer;"
+static int WriteBlock0(struct FPDF_FILEWRITE_* pThis,
+                              const void* pData,
+                              unsigned long size){
+    auto pEnv = getJNIEnv();
+    bool attached = false;
+    if(pEnv == nullptr){
+        pEnv = attachJNIEnv();
+        attached = true;
+    }
+    //build param
+    auto byteBuffer = pEnv->NewDirectByteBuffer(const_cast<void *>(pData), size);
+    //call
+    auto cls = pEnv->FindClass("com/heaven7/android/pdfium/PDFWriter");
+    if(cls == nullptr){
+        LOGD("JNI >>> can't find class. name = %s", "com/heaven7/android/pdfium/PDFWriter");
+        return 1;
+    }
+    jmethodID mid;
+    mid = pEnv->GetMethodID(cls, "write", "(" SIG_BYTE_BUFFER ")V");
+    pEnv->CallVoidMethod(_writer, mid, byteBuffer);
+
+    pEnv->DeleteGlobalRef(_writer);
+    if(attached){
+        detachJNIEnv();
+    }
+    return 1;
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_shockwave_pdfium_PdfiumCore_nSavePdf(JNIEnv *env, jobject thiz, jlong docPtr,
+                                              jobject writer, jboolean incremental) {
+    DocumentFile *doc = reinterpret_cast<DocumentFile*>(docPtr);
+    _writer = env->NewGlobalRef(writer);
+    FPDF_FILEWRITE filewrite;
+    filewrite.version = 1;
+    filewrite.WriteBlock = WriteBlock0;
+    FPDF_SaveAsCopy(doc->pdfDocument, &filewrite, incremental ? FPDF_INCREMENTAL : FPDF_NO_INCREMENTAL);
+}
