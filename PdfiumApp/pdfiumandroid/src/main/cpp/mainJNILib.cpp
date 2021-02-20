@@ -786,7 +786,6 @@ static int WriteBlock0(struct FPDF_FILEWRITE_* pThis,
     mid = pEnv->GetMethodID(cls, "write", "(" SIG_BYTE_BUFFER ")V");
     pEnv->CallVoidMethod(_writer, mid, byteBuffer);
 
-    pEnv->DeleteGlobalRef(_writer);
     if(attached){
         detachJNIEnv();
     }
@@ -803,4 +802,5 @@ Java_com_shockwave_pdfium_PdfiumCore_nSavePdf(JNIEnv *env, jobject thiz, jlong d
     filewrite.version = 1;
     filewrite.WriteBlock = WriteBlock0;
     FPDF_SaveAsCopy(doc->pdfDocument, &filewrite, incremental ? FPDF_INCREMENTAL : FPDF_NO_INCREMENTAL);
+    env->DeleteGlobalRef(_writer);
 }
