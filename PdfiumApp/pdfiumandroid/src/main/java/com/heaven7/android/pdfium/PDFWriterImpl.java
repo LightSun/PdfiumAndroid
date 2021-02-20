@@ -22,9 +22,9 @@ public class PDFWriterImpl implements PDFWriter {
             byte[] arr;
             if(buffer.hasArray()){
                 arr = buffer.array();
-                out.write(arr, buffer.arrayOffset(), buffer.capacity());
+                out.write(arr, buffer.arrayOffset(), buffer.remaining());
             }else {
-                arr = new byte[buffer.capacity()];
+                arr = new byte[buffer.remaining()];
                 buffer.get(arr);
                 out.write(arr);
             }
