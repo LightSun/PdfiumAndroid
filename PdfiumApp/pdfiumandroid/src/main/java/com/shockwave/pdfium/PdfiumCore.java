@@ -39,8 +39,8 @@ public final class PdfiumCore {
          * @li 0    0   1 */
         nInsertImage(docPtr, pageIndex, bitmap, arr[0], arr[2], arr[4], arr[1], arr[3], arr[5]);
     }
-    public void savePdf(long docPtr, PDFWriter writer){
-
+    public void savePdf(long docPtr, PDFWriter writer, boolean incremental){
+        nSavePdf(docPtr, writer, incremental);
     }
     private native void nSavePdf(long docPtr, PDFWriter writer, boolean incremental);
 
