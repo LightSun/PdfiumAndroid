@@ -2,6 +2,7 @@ package com.shockwave.pdfium;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.RectF;
@@ -29,6 +30,16 @@ public final class PdfiumCore {
         System.loadLibrary("modpdfium");
         System.loadLibrary("jniPdfium");
     }
+    public void addImage(long docPtr, int pageIndex, Bitmap bitmap, Matrix matrix){
+        float[] arr = new float[9];
+        matrix.getValues(arr);
+        /* @li a    c   e  // 0, 2, 4
+         * @li b    d   f  // 1, 3, 5
+         * @li 0    0   1 */
+        nInsertImage(docPtr, pageIndex, bitmap, arr[0], arr[2], arr[4], arr[1], arr[3], arr[5]);
+    }
+    //add a image to pdf
+    private native void nInsertImage(long docPtr, int pageIndex, Bitmap bitmap, float a, float b, float c, float d, float e, float f);
 
     private native long nativeOpenDocument(int fd, String password);
 

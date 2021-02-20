@@ -15,6 +15,7 @@ extern "C" {
 using namespace android;
 
 #include <fpdfview.h>
+#include "fpdf_edit.h"
 #include <fpdf_doc.h>
 #include <string>
 #include <vector>
@@ -178,6 +179,61 @@ static int getBlock(void* param, unsigned long position, unsigned char* outBuffe
         return 0;
     }
     return 1;
+}
+
+JNI_FUNC(void, PdfiumCore, nInsertImage)(JNI_ARGS, jlong docPtr, jint pageIndex,jobject bitmap,
+                                         jfloat a, jfloat b, jfloat c, jfloat d, jfloat e, jfloat f){
+    DocumentFile *doc = reinterpret_cast<DocumentFile*>(docPtr);
+    FPDF_PAGE page = FPDF_LoadPage(doc->pdfDocument, pageIndex);
+    if (page == NULL) {
+        LOGE("nInsertImage: Loaded page is null");
+        return;
+    }
+
+    AndroidBitmapInfo info;
+    int ret;
+    if((ret = AndroidBitmap_getInfo(env, bitmap, &info)) < 0) {
+        LOGE("Fetching bitmap info failed: %s", strerror(ret * -1));
+        return;
+    }
+
+    int w = info.width;
+    int h = info.height;
+
+    if(info.format != ANDROID_BITMAP_FORMAT_RGBA_8888){
+        LOGE("Bitmap format must be RGBA_8888");
+        return;
+    }
+
+    void *addr;
+    if( (ret = AndroidBitmap_lockPixels(env, bitmap, &addr)) != 0 ){
+        LOGE("Locking bitmap failed: %s", strerror(ret * -1));
+        return;
+    }
+    unsigned char * oldAddr = static_cast<unsigned char *>(addr);
+
+    unsigned char *tmp;
+    tmp = static_cast<unsigned char *>(malloc(h * w * sizeof(uint8_t) * 4));
+
+    //convert data
+    for (int ih = 0; ih < h; ++ih) {
+        for (int iw = 0; iw < w; ++iw) {
+            int i = ih * w + iw;
+            int idx = i * 4;
+            //argb -> bgra
+            tmp[idx] = oldAddr[idx + 3];
+            tmp[idx + 1] = oldAddr[idx + 2];
+            tmp[idx + 2] = oldAddr[idx + 1];
+            tmp[idx + 3] = oldAddr[idx];
+        }
+    }
+
+    FPDF_BITMAP pdfBitmap = FPDFBitmap_CreateEx(w, h, FPDFBitmap_BGRA, tmp, info.stride);
+
+    auto imgObj = FPDFPageObj_NewImgeObj(doc->pdfDocument);
+    FPDFImageObj_SetBitmap(&page, 1, imgObj, pdfBitmap);
+    FPDFPageObj_Transform(imgObj, a, b, c, d, e, f);
+    FPDFPage_InsertObject(page, imgObj);
 }
 
 JNI_FUNC(jlong, PdfiumCore, nativeOpenDocument)(JNI_ARGS, jint fd, jstring password){
