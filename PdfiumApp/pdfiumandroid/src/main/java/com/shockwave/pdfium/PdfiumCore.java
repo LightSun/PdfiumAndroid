@@ -31,16 +31,16 @@ public final class PdfiumCore {
         System.loadLibrary("modpdfium");
         System.loadLibrary("jniPdfium");
     }
-    public void addImage(long docPtr, int pageIndex, Bitmap bitmap, Matrix matrix){
+    public void addImage(PdfDocument doc, int pageIndex, Bitmap bitmap, Matrix matrix){
         float[] arr = new float[9];
         matrix.getValues(arr);
         /* @li a    c   e  // 0, 2, 4
          * @li b    d   f  // 1, 3, 5
          * @li 0    0   1 */
-        nInsertImage(docPtr, pageIndex, bitmap, arr[0], arr[2], arr[4], arr[1], arr[3], arr[5]);
+        nInsertImage(doc.mNativeDocPtr, pageIndex, bitmap, arr[0], arr[2], arr[4], arr[1], arr[3], arr[5]);
     }
-    public void savePdf(long docPtr, PDFWriter writer, boolean incremental){
-        nSavePdf(docPtr, writer, incremental);
+    public void savePdf(PdfDocument doc, PDFWriter writer, boolean incremental){
+        nSavePdf(doc.mNativeDocPtr, writer, incremental);
     }
     private native void nSavePdf(long docPtr, PDFWriter writer, boolean incremental);
 
