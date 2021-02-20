@@ -29,6 +29,7 @@ public class PDFWriterImpl implements PDFWriter {
                 out.write(arr);
             }
             out.flush();
+            System.out.println("write pdf file ok: " + file);
         }catch (Exception e){
             e.printStackTrace();
         }finally {
