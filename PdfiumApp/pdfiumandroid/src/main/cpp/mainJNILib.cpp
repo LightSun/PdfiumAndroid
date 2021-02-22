@@ -768,27 +768,17 @@ jobject _writer;
 static int WriteBlock0(struct FPDF_FILEWRITE_* pThis,
                               const void* pData,
                               unsigned long size){
-    auto pEnv = getJNIEnv();
-    bool attached = false;
-    if(pEnv == nullptr){
-        pEnv = attachJNIEnv();
-        attached = true;
-    }
-    //build param
-    auto byteBuffer = pEnv->NewDirectByteBuffer(const_cast<void *>(pData), size);
-    //call
-    auto cls = pEnv->FindClass("com/heaven7/android/pdfium/PDFWriter");
-    if(cls == nullptr){
-        LOGD("JNI >>> can't find class. name = %s", "com/heaven7/android/pdfium/PDFWriter");
-        return 1;
-    }
-    jmethodID mid;
-    mid = pEnv->GetMethodID(cls, "write", "(" SIG_BYTE_BUFFER ")V");
-    pEnv->CallVoidMethod(_writer, mid, byteBuffer);
-
-    if(attached){
-        detachJNIEnv();
-    }
+    RUN_IN_JAVA( //build param
+            auto byteBuffer = pEnv->NewDirectByteBuffer(const_cast<void *>(pData), size);
+            //call
+            auto cls = pEnv->FindClass("com/heaven7/android/pdfium/PDFWriter");
+            if(cls == nullptr){
+                LOGD("JNI >>> can't find class. name = %s", "com/heaven7/android/pdfium/PDFWriter");
+                return 1;
+            }
+            jmethodID mid;
+            mid = pEnv->GetMethodID(cls, "write", "(" SIG_BYTE_BUFFER ")V");
+            pEnv->CallVoidMethod(_writer, mid, byteBuffer));
     return 1;
 }
 

@@ -28,6 +28,17 @@ void dumpReferenceTables(JNIEnv *env);
 
 const char *stringReplace(const char *str, const char *src, const char *dst);
 
+#define RUN_IN_JAVA(x) \
+auto pEnv = getJNIEnv();\
+bool attached = false;\
+if(pEnv == nullptr){\
+pEnv = attachJNIEnv();\
+attached = true;}\
+{x;} \
+if(attached){\
+detachJNIEnv();\
+}
+
 #ifdef __cplusplus
 }
 #endif
