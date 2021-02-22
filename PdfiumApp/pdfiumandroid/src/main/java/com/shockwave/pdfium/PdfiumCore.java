@@ -39,10 +39,10 @@ public final class PdfiumCore {
          * @li 0    0   1 */
         nInsertImage(doc.mNativeDocPtr, pageIndex, bitmap, arr[0], arr[2], arr[4], arr[1], arr[3], arr[5]);
     }
-    public void savePdf(PdfDocument doc, PDFWriter writer, boolean incremental){
-        nSavePdf(doc.mNativeDocPtr, writer, incremental);
+    public void savePdf(PdfDocument doc, String path, boolean incremental){
+        nSavePdf(doc.mNativeDocPtr, path, incremental);
     }
-    private native void nSavePdf(long docPtr, PDFWriter writer, boolean incremental);
+    private native void nSavePdf(long docPtr, String path, boolean incremental);
 
     //add a image to pdf
     private native void nInsertImage(long docPtr, int pageIndex, Bitmap bitmap, float a, float b, float c, float d, float e, float f);

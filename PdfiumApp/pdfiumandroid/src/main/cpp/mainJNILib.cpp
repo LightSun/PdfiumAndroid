@@ -781,16 +781,54 @@ static int WriteBlock0(struct FPDF_FILEWRITE_* pThis,
             pEnv->CallVoidMethod(_writer, mid, byteBuffer));
     return 1;
 }
+//------------------------------------------------------------------------------------
+struct PdfToFdWriter : FPDF_FILEWRITE {
+    int dstFd;
+};
 
+static bool writeAllBytes(const int fd, const void *buffer, const size_t byteCount) {
+    char *writeBuffer = static_cast<char *>(const_cast<void *>(buffer));
+    size_t remainingBytes = byteCount;
+    while (remainingBytes > 0) {
+        ssize_t writtenByteCount = write(fd, writeBuffer, remainingBytes);
+        if (writtenByteCount == -1) {
+            if (errno == EINTR) {
+                continue;
+            }
+            LOGE("Error writing to buffer: %d", errno);
+            return false;
+        }
+        remainingBytes -= writtenByteCount;
+        writeBuffer += writtenByteCount;
+    }
+    return true;
+}
+
+static int writeBlock(FPDF_FILEWRITE* owner, const void* buffer, unsigned long size) {
+    const PdfToFdWriter* writer = reinterpret_cast<PdfToFdWriter*>(owner);
+    const bool success = writeAllBytes(writer->dstFd, buffer, size);
+    if (success < 0) {
+        LOGE("Cannot write to file descriptor. Error:%d", errno);
+        return 0;
+    }
+    return 1;
+}
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_shockwave_pdfium_PdfiumCore_nSavePdf(JNIEnv *env, jobject thiz, jlong docPtr,
-                                              jobject writer, jboolean incremental) {
+                                              jstring path, jboolean incremental) {
+    auto str = env->GetStringUTFChars(path, NULL);
+    //clear and allow write
+    auto pFile = fopen(str, "wb+");
     DocumentFile *doc = reinterpret_cast<DocumentFile*>(docPtr);
-    _writer = env->NewGlobalRef(writer);
-    FPDF_FILEWRITE filewrite;
-    filewrite.version = 1;
-    filewrite.WriteBlock = WriteBlock0;
-    FPDF_SaveAsCopy(doc->pdfDocument, &filewrite, incremental ? FPDF_INCREMENTAL : FPDF_NO_INCREMENTAL);
-    env->DeleteGlobalRef(_writer);
+
+    PdfToFdWriter writer;
+    writer.dstFd = fileno(pFile);
+    writer.WriteBlock = &writeBlock;
+    FPDF_BOOL success = FPDF_SaveAsCopy(doc->pdfDocument, &writer, incremental ? FPDF_INCREMENTAL : FPDF_NO_INCREMENTAL);
+    fclose(pFile);
+    if (!success) {
+        jniThrowExceptionFmt(env, "java/io/IOException",
+                             "cannot write to fd. Error: %d", errno);
+    }
 }
