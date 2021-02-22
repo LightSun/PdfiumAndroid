@@ -235,7 +235,13 @@ JNI_FUNC(void, PdfiumCore, nInsertImage)(JNI_ARGS, jlong docPtr, jint pageIndex,
     auto imgObj = FPDFPageObj_NewImgeObj(doc->pdfDocument);
     FPDFImageObj_SetBitmap(&page, 1, imgObj, pdfBitmap);
     FPDFPageObj_Transform(imgObj, a, b, c, d, e, f);
+
+    auto oldPageCount = FPDFPage_CountObject(page);
     FPDFPage_InsertObject(page, imgObj);
+    auto newPageCount = FPDFPage_CountObject(page);
+    auto result = FPDFPage_GenerateContent(page);
+    FPDFBitmap_Destroy(pdfBitmap);
+    LOGI("oldPageCount = %d, newPageCount = %d, generate pdf content = %d", oldPageCount, newPageCount, result);
 }
 
 JNI_FUNC(jlong, PdfiumCore, nativeOpenDocument)(JNI_ARGS, jint fd, jstring password){
